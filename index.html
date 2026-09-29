@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dasbor Keuangan Pribadi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <!-- ═══ Top Navigation Bar ═══ -->
+  <nav class="navbar">
+    <div class="nav-left">
+      <div class="logo">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">Nabung Yuk</span>
+      </div>
+    </div>
+    <div class="nav-center">
+      <div class="filter-pills" id="filter-pills">
+        <button class="filter-pill" data-period="today">Hari Ini</button>
+        <button class="filter-pill active" data-period="week">Minggu Ini</button>
+        <button class="filter-pill" data-period="month">Bulan Ini</button>
+        <button class="filter-pill" data-period="custom">Kustom</button>
+      </div>
+    </div>
+    <div class="nav-right">
+      <button class="btn-add-transaction" id="btn-add">
+        <span class="btn-icon">+</span>
+        <span class="btn-label">Transaksi Baru</span>
+      </button>
+      <button class="btn-theme-toggle" id="btn-theme" title="Ganti Tema">
+        <span id="theme-icon">🌙</span>
+      </button>
+      <!-- Klik Avatar untuk membuka Pengaturan Angka Statis -->
+      <div class="profile-avatar" id="btn-settings" title="Pengaturan Dasbor" style="cursor: pointer;">
+        <span>NY</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══ Main Dashboard ═══ -->
+  <main class="dashboard">
+    <div class="bento-grid">
+
+      <!-- Card 1 — Net Balance (3D Tilt + Flip) -->
+      <section class="card card-balance" id="card-balance">
+        <div class="card-shimmer"></div>
+        <div class="card-3d-wrapper">
+          <div class="card-3d" id="card-3d">
+            <!-- FRONT -->
+            <div class="card-face card-front">
+              <div class="card-header">
+                <span class="card-label">Total Saldo Bersih</span>
+                <span class="card-period" id="card-period">Memuat...</span>
+              </div>
+              <div class="balance-amount">
+                <span class="currency">Rp</span><span id="net-balance">0</span>
+              </div>
+              <div class="balance-trend positive" id="balance-trend">
+                <span class="trend-arrow" id="trend-arrow">↑</span>
+                <span id="balance-trend-text">+0% dari bulan lalu</span>
+              </div>
+              <div class="balance-row">
+                <div class="balance-item income">
+                  <span class="item-dot"></span>
+                  <span class="item-label">Pemasukan</span>
+                  <span class="item-value" id="total-income">Rp0</span>
+                </div>
+                <div class="balance-item expense">
+                  <span class="item-dot"></span>
+                  <span class="item-label">Pengeluaran</span>
+                  <span class="item-value" id="total-expense">Rp0</span>
+                </div>
+              </div>
+              <button class="flip-btn" id="flip-btn">
+                <span>Putar untuk Insight</span>
+                <span class="flip-icon">↻</span>
+              </button>
+            </div>
+            <!-- BACK -->
+            <div class="card-face card-back">
+              <div class="card-header">
+                <span class="card-label">Metrik Pertumbuhan Bulanan</span>
+                <button class="flip-btn back-flip" id="flip-btn-back">
+                  <span class="flip-icon">↻</span><span>Putar Kembali</span>
+                </button>
+              </div>
+              <div class="metrics-grid">
+                <div class="metric"><span class="metric-value green" id="metric-net-savings">Rp0</span><span class="metric-label">Tabungan Bersih</span></div>
+                <div class="metric"><span class="metric-value cyan" id="metric-budget-used">0%</span><span class="metric-label">Anggaran Terpakai</span></div>
+                <div class="metric"><span class="metric-value violet" id="metric-invested">Rp0</span><span class="metric-label">Diinvestasikan</span></div>
+                <div class="metric"><span class="metric-value green" id="metric-total-tx">0</span><span class="metric-label">Total Transaksi</span></div>
+              </div>
+              <div class="sparkline-section">
+                <span class="sparkline-label">Tren Pengeluaran 7 Hari</span>
+                <canvas id="sparkline-chart" height="60"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Card 2 — Safe-to-Spend Gauge -->
+      <section class="card card-gauge">
+        <div class="card-header">
+          <span class="card-label">Aman Dibelanjakan</span>
+          <span class="card-sublabel">Anggaran Hari Ini</span>
+        </div>
+        <div class="gauge-container">
+          <svg class="gauge-svg" viewBox="0 0 200 200">
+            <circle class="gauge-track" cx="100" cy="100" r="82"/>
+            <circle class="gauge-fill" id="gauge-fill" cx="100" cy="100" r="82"/>
+          </svg>
+          <div class="gauge-center">
+            <span class="gauge-amount" id="gauge-amount">Rp0</span>
+            <span class="gauge-label">tersisa</span>
+          </div>
+        </div>
+        <div class="gauge-status" id="gauge-status">
+          <span class="status-dot"></span>
+          <span class="status-text">Menghitung…</span>
+        </div>
+      </section>
+
+      <!-- Card 3 — Income vs Expenses Chart -->
+      <section class="card card-analytics">
+        <div class="card-header">
+          <span class="card-label">Pemasukan vs Pengeluaran</span>
+          <div class="chart-toggle">
+            <button class="chart-type-btn active" data-chart="donut">Donat</button>
+            <button class="chart-type-btn" data-chart="area">Area</button>
+          </div>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="main-chart"></canvas>
+        </div>
+        <div class="chart-legend" id="chart-legend"></div>
+      </section>
+
+      <!-- Card 4 — Savings Jar -->
+      <section class="card card-savings">
+        <div class="card-header">
+          <span class="card-label">Toples Tabungan</span>
+          <div style="display: flex; gap: 6px; align-items: center;">
+            <button class="btn-delete-jar" id="btn-delete-jar" title="Hapus Toples Saat Ini">🗑️</button>
+            <button class="btn-add-jar" id="btn-add-jar" title="Tambah Toples Tabungan">+ Toples Baru</button>
+          </div>
+        </div>
+        
+        <!-- Pilihan Toples Tabungan -->
+        <div class="jar-selector" id="jar-selector"></div>
+
+        <div class="jar-goal-name" id="jar-goal-name">Belum Ada Toples</div>
+        <div class="jar-container">
+          <div class="jar">
+            <div class="jar-lid"></div>
+            <div class="jar-body">
+              <div class="liquid" id="liquid">
+                <div class="liquid-wave"></div>
+                <div class="liquid-wave wave-2"></div>
+                <div class="bubble b1"></div>
+                <div class="bubble b2"></div>
+                <div class="bubble b3"></div>
+                <div class="bubble b4"></div>
+                <div class="bubble b5"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="jar-info">
+          <div class="jar-amounts">
+            <span class="jar-current" id="jar-current">Rp0</span>
+            <span class="jar-sep">/</span>
+            <span class="jar-goal" id="jar-goal">Rp0</span>
+          </div>
+          <span class="jar-pct" id="jar-pct">0%</span>
+        </div>
+        <button class="btn-deposit-jar" id="btn-deposit-jar">➕ Setor Tabungan</button>
+      </section>
+
+      <!-- Card 5 — Recent Transactions -->
+      <section class="card card-transactions">
+        <div class="card-header">
+          <span class="card-label">Transaksi Terakhir</span>
+          <span class="tx-count" id="tx-count">0 transaksi</span>
+        </div>
+        <div class="search-bar">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="tx-search" placeholder="Cari transaksi…" autocomplete="off">
+        </div>
+        <div class="category-filters" id="cat-filters">
+          <button class="cat-filter active" data-cat="all">Semua</button>
+          <button class="cat-filter" data-cat="food">🍔 Makanan</button>
+          <button class="cat-filter" data-cat="transport">🚗 Transportasi</button>
+          <button class="cat-filter" data-cat="shopping">🛍️ Belanja</button>
+          <button class="cat-filter" data-cat="bills">📄 Tagihan</button>
+          <button class="cat-filter" data-cat="salary">💰 Gaji</button>
+          <button class="cat-filter" data-cat="freelance">💻 Freelance</button>
+        </div>
+        <div class="transactions-list" id="tx-list"></div>
+      </section>
+
+      <!-- Card 6 — "What-If" Budget Simulator -->
+      <section class="card card-simulator">
+        <div class="card-header">
+          <span class="card-label">Simulator Anggaran</span>
+          <span class="sim-badge">🧪 Eksperimen</span>
+        </div>
+        <div class="sim-body">
+          <p class="sim-question">Bagaimana jika pengeluaran ditambah…</p>
+          <div class="sim-amount">
+            <span class="sim-dollar">Rp</span><span id="sim-value">0</span>
+          </div>
+          <div class="slider-wrap">
+            <input type="range" id="sim-slider" min="0" max="5000000" value="0" step="50000">
+            <div class="slider-labels"><span>Rp0</span><span>Rp2.500.000</span><span>Rp5.000.000</span></div>
+          </div>
+          <div class="sim-results">
+            <div class="sim-col">
+              <span class="sim-label">Saldo Saat Ini</span>
+              <span class="sim-val green" id="sim-current">Rp0</span>
+            </div>
+            <span class="sim-arrow">→</span>
+            <div class="sim-col">
+              <span class="sim-label">Proyeksi Saldo</span>
+              <span class="sim-val" id="sim-projected">Rp0</span>
+            </div>
+          </div>
+          <div class="sim-impact" id="sim-impact">Geser slider untuk simulasi</div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ═══ Add Transaction Modal ═══ -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal" id="modal">
+      <div class="modal-header">
+        <h2>Tambah Transaksi</h2>
+        <button class="modal-close" id="modal-close">&times;</button>
+      </div>
+      <form id="tx-form" autocomplete="off">
+        <div class="form-group">
+          <label for="tx-amount">Jumlah (Rp)</label>
+          <div class="input-amount">
+            <span class="input-prefix">Rp</span>
+            <input type="number" id="tx-amount" placeholder="0" min="1" step="any" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Jenis</label>
+          <div class="type-toggle">
+            <button type="button" class="type-btn active" data-type="expense"><span>↓</span> Pengeluaran</button>
+            <button type="button" class="type-btn" data-type="income"><span>↑</span> Pemasukan</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Kategori</label>
+          <div class="cat-selector" id="cat-selector">
+            <button type="button" class="cat-pill active" data-cat="food">🍔 Makanan</button>
+            <button type="button" class="cat-pill" data-cat="transport">🚗 Transport</button>
+            <button type="button" class="cat-pill" data-cat="shopping">🛍️ Belanja</button>
+            <button type="button" class="cat-pill" data-cat="bills">📄 Tagihan</button>
+            <button type="button" class="cat-pill" data-cat="entertainment">🎮 Hiburan</button>
+            <button type="button" class="cat-pill" data-cat="health">💊 Kesehatan</button>
+            <button type="button" class="cat-pill" data-cat="salary">💰 Gaji</button>
+            <button type="button" class="cat-pill" data-cat="freelance">💻 Freelance</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="tx-date">Tanggal</label>
+          <input type="date" id="tx-date" required>
+        </div>
+        <div class="form-group">
+          <label for="tx-note">Catatan <span class="optional">(opsional)</span></label>
+          <input type="text" id="tx-note" placeholder="Tambahkan catatan…">
+        </div>
+        <button type="submit" class="btn-submit">Simpan Transaksi</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══ Modal Tambah Toples Tabungan ═══ -->
+  <div class="modal-overlay" id="modal-jar-overlay">
+    <div class="modal" id="modal-jar">
+      <div class="modal-header">
+        <h2>Tambah Toples Tabungan</h2>
+        <button class="modal-close" id="modal-jar-close">&times;</button>
+      </div>
+      <form id="jar-form" autocomplete="off">
+        <div class="form-group">
+          <label for="jar-title">Nama Target Tabungan</label>
+          <input type="text" id="jar-title" placeholder="Contoh: Liburan Bali, iPhone 16..." required>
+        </div>
+        <div class="form-group">
+          <label for="jar-target-input">Target Dana (Rp)</label>
+          <div class="input-amount">
+            <span class="input-prefix">Rp</span>
+            <input type="number" id="jar-target-input" placeholder="10000000" min="1" step="any" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="jar-initial-input">Saldo Awal (Rp) <span class="optional">(opsional)</span></label>
+          <div class="input-amount">
+            <span class="input-prefix">Rp</span>
+            <input type="number" id="jar-initial-input" placeholder="0" min="0" step="any">
+          </div>
+        </div>
+        <button type="submit" class="btn-submit">Buat Toples Tabungan</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══ Modal Setor Tabungan ═══ -->
+  <div class="modal-overlay" id="modal-deposit-overlay">
+    <div class="modal" id="modal-deposit">
+      <div class="modal-header">
+        <h2>Setor Tabungan</h2>
+        <button class="modal-close" id="modal-deposit-close">&times;</button>
+      </div>
+      <form id="deposit-form" autocomplete="off">
+        <div class="form-group">
+          <label id="deposit-target-label">Setor ke: Tabungan</label>
+          <div class="input-amount">
+            <span class="input-prefix">Rp</span>
+            <input type="number" id="deposit-amount" placeholder="100000" min="1" step="any" required>
+          </div>
+        </div>
+        <button type="submit" class="btn-submit">Simpan Setoran</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══ Modal Pengaturan Global (Settings) ═══ -->
+  <div class="modal-overlay" id="modal-settings-overlay">
+    <div class="modal" id="modal-settings">
+      <div class="modal-header">
+        <h2>Pengaturan Dasbor</h2>
+        <button class="modal-close" id="modal-settings-close">&times;</button>
+      </div>
+      <form id="settings-form" autocomplete="off">
+        <div class="form-group">
+          <label for="set-budget">Anggaran Harian (Rp)</label>
+          <div class="input-amount">
+            <span class="input-prefix">Rp</span>
+            <input type="number" id="set-budget" value="250000" min="1" step="any" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="set-invested">Total Diinvestasikan (Rp)</label>
+          <div class="input-amount">
+            <span class="input-prefix">Rp</span>
+            <input type="number" id="set-invested" value="1200000" min="0" step="any" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="set-trend">Tren Saldo Bulan Lalu (%)</label>
+          <div class="input-amount">
+            <span class="input-prefix">%</span>
+            <input type="number" id="set-trend" value="12.5" step="any" required>
+          </div>
+        </div>
+        <button type="submit" class="btn-submit">Simpan Pengaturan</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══ Toast Container ═══ -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
